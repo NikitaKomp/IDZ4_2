@@ -1,0 +1,95 @@
+OPERATIONS	"+"|"-"|"*"|"/"|"%"|"=="|"!="|">"|">="|"<"|"<="|"&&"|"||"
+VARIABLE	[a-zA-Z]+
+NUMBERS		[0-9]+
+KEYWORDS	"if"|"then"|"else"|"while"|"do"|"skip"|"write"|"read"
+
+%option noyywrap
+
+%{
+	#include <string.h>
+	#include <ctype.h>
+
+	int row_number = 0;
+	int column_number = 0;
+	int increase_column_posiiton(char* text)
+	{
+		column_number = column_number + (int)strlen(text);
+	}
+	char* uppercase_first_letter(char* text)
+	{
+		char lower = text[0];
+		if(lower >= 'a' && lower <= 'z'){
+			text[0] = ('A' + lower - 'a');
+		}
+		return text;
+	}
+%}
+
+%%
+
+{KEYWORDS}	{       
+			int old_column = column_number;
+			increase_column_posiiton(yytext);
+			printf("KW_%s(%i, %i, %i); ", uppercase_first_letter(yytext), row_number,old_column, column_number - 1);
+		}
+
+
+{VARIABLE}	{
+                        int old_column = column_number;
+			increase_column_posiiton(yytext);
+			printf("Var(\"%s\", %i, %i, %i); ", yytext, row_number, old_column, column_number - 1);
+		}
+
+{OPERATIONS}    {
+                        int old_column = column_number;
+                        increase_column_posiiton(yytext);
+			char* op_name;
+			if(strcmp(yytext, "+")==0) op_name = "Plus";
+                        if(strcmp(yytext, "-")==0) op_name = "Minus";
+                        if(strcmp(yytext, "*")==0) op_name = "Multiplication";
+                        if(strcmp(yytext, "/")==0) op_name = "Division";
+                        if(strcmp(yytext, "%")==0) op_name = "Mod";
+                        if(strcmp(yytext, "==")==0) op_name = "Equality";
+                        if(strcmp(yytext, "!=")==0) op_name = "NotEquality";
+                        if(strcmp(yytext, ">")==0) op_name = "Greater";
+                        if(strcmp(yytext, ">=")==0) op_name = "GreaterEqual";
+                        if(strcmp(yytext, "<")==0) op_name = "Lower";
+                        if(strcmp(yytext, "<=")==0) op_name = "LowerEqual";
+                        if(strcmp(yytext, "&&")==0) op_name = "And";
+                        if(strcmp(yytext, "||")==0) op_name = "Or";
+                        printf("Op(%s, %i, %i, %i); ", op_name, row_number, old_column, column_number - 1);
+                }
+
+{NUMBERS}	{
+                        int old_column = column_number;
+                        increase_column_posiiton(yytext);
+                        printf("Num(%s, %i, %i, %i); ", yytext, row_number, old_column, column_number - 1);
+                }
+
+;		{
+                        int old_column = column_number;
+			increase_column_posiiton(yytext);
+			printf("Colon(0, %i, %i, %i); ", row_number, old_column, column_number - 1);
+		}
+
+\n|\n\r	 	{
+			row_number = row_number + 1;
+			column_number = 0;
+		}
+
+\t		{
+			increase_column_posiiton(yytext);
+                }
+
+[ ]             {
+                        column_number = column_number + 1;
+                }
+
+%%
+
+int main( int argc, char **argv )
+{
+	yylex();
+	printf("\n");
+}
+

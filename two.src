@@ -27,6 +27,17 @@ KEYWORDS	"if"|"then"|"else"|"while"|"do"|"skip"|"write"|"read"
 
 %%
 
+
+[()]		{
+                        column_number = column_number + 1;
+			int old_column = column_number;
+                        increase_column_posiiton(yytext);
+			char* br_name;
+			if(strcmp(yytext, ")")==0) br_name="Right";
+                        if(strcmp(yytext, "(")==0) br_name="Left";
+                        printf("BR_%s(%i, %i, %i); ", br_name, row_number,old_column, column_number - 1);
+                }
+
 {KEYWORDS}	{       
 			int old_column = column_number;
 			increase_column_posiiton(yytext);
@@ -77,11 +88,7 @@ KEYWORDS	"if"|"then"|"else"|"while"|"do"|"skip"|"write"|"read"
 			column_number = 0;
 		}
 
-\t		{
-			increase_column_posiiton(yytext);
-                }
-
-[ ]             {
+[ \t]		{
                         column_number = column_number + 1;
                 }
 
@@ -89,7 +96,11 @@ KEYWORDS	"if"|"then"|"else"|"while"|"do"|"skip"|"write"|"read"
 
 int main( int argc, char **argv )
 {
+	++argv, --argc;
+	if ( argc > 0 )
+		yyin = fopen( argv[0], "r" );
+	else
+		yyin = stdin;
 	yylex();
 	printf("\n");
 }
-
